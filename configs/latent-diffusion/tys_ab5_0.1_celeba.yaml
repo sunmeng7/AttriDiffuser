@@ -1,0 +1,103 @@
+model:
+  base_learning_rate: 2.0e-06
+  target: ldm.models.diffusion.ddpm.LatentDiffusion
+  params:
+    linear_start: 0.0015
+    linear_end: 0.0195
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    first_stage_key: image
+    cond_stage_key: caption
+    image_size: 32    # 32*4=128
+    channels: 3
+    monitor: val/loss_simple_ema
+    conditioning_key: crossattn
+    unet_config:
+      target: ldm.modules.diffusionmodules.openaimodel.UNetModel
+      params:
+        image_size: 32
+        in_channels: 3
+        out_channels: 3
+        model_channels: 224
+        attention_resolutions:  # 8,4,2
+        - 4
+        - 2
+        - 1
+        num_res_blocks: 2
+        channel_mult:
+        - 1
+        - 2
+        - 3
+        - 4
+        num_head_channels: 32
+        fuser_type: "gatedSA"
+#        context_dim: 768
+        context_dim: 1024
+        use_spatial_transformer: True
+
+        grounding_tokenizer:
+          target: ldm.modules.diffusionmodules.text_grounding_net.PositionNet
+          params:
+#            in_dim: 768
+#            out_dim: 768
+            in_dim: 1024
+            out_dim: 1024
+
+    first_stage_config:
+      target: ldm.models.autoencoder.VQModelInterface
+      params:
+        embed_dim: 3
+        n_embed: 8192
+        ckpt_path: [https://ommer-lab.com/files/latent-diffusion/vq-f4.zip]
+        ddconfig:
+          double_z: false
+          z_channels: 3
+          resolution: 32
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+    cond_stage_config:
+      target: ldm.modules.encoders.modules.FrozenOpenCLIPEmbedder
+      params:
+        freeze: True
+        layer: "penultimate"
+    grounding_tokenizer_input:
+      target: grounding_input.text_grounding_tokinzer_input.GroundingNetInput
+
+data:
+  target: main.DataModuleFromConfig
+  params:
+    batch_size: 6
+    num_workers: 0
+    wrap: false
+    train:
+      target: ldm.data.imagenet_celeb.MutilVox
+      params:
+        size: 128
+        split: "train"
+    validation:
+      target: ldm.data.imagenet_celeb.MutilVox
+      params:
+        size: 128
+        split: "valid"
+lightning:
+  callbacks:
+    image_logger:
+      target: main.ImageLogger
+      params:
+        batch_frequency: 7000
+        max_images: 2
+        increase_log_steps: False
+
+  trainer:
+    benchmark: True
