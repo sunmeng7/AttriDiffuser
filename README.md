@@ -16,6 +16,13 @@ cd AttriDiffuser
 conda env create -f envs.yaml
 ```
 
+## Models
+[Baidu Yun](https://pan.baidu.com/s/12kekZQDsQT9-Nh_kD41lKg)
+
+link : https://pan.baidu.com/s/12kekZQDsQT9-Nh_kD41lKg
+
+code : 1qrw
+
 ## Visual Results
 ### Multimodal Voxceleb
 ![image](https://github.com/sunmeng7/AttriDiffuser/assets/50901976/0d4ab89e-9ca1-4521-9e0e-361b51661ead)
